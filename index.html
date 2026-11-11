@@ -1,0 +1,377 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>داشبورد قرارداد اجاره</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap">
+<style>
+/* Layout: ledger-style dashboard. Summary calculator first, then lifecycle, who-pays-what, field checklist, searchable clauses. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --surface2:#eaeff1; --ink:#14212b; --ink2:#46565f; --muted:#6f7f88;
+  --line:#d6dee2; --accent:#0e6b73; --accent-soft:#d9eeef;
+  --tenant:#a64b0a; --tenant-soft:#f8e6d6; --both:#5b5f8a; --both-soft:#e4e5f2;
+  --warn:#8a5a00; --warn-soft:#fbefcf;
+  --font-body:"Vazirmatn",Tahoma,"Segoe UI",sans-serif;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f171c; --surface:#16222a; --surface2:#1d2d37; --ink:#e7eef1; --ink2:#a9bac2; --muted:#82949d;
+    --line:#2b3d48; --accent:#4fc1c9; --accent-soft:#16373b;
+    --tenant:#f0a066; --tenant-soft:#3a2716; --both:#a9acdf; --both-soft:#26283f;
+    --warn:#f0c15c; --warn-soft:#38300f; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f171c; --surface:#16222a; --surface2:#1d2d37; --ink:#e7eef1; --ink2:#a9bac2; --muted:#82949d;
+  --line:#2b3d48; --accent:#4fc1c9; --accent-soft:#16373b;
+  --tenant:#f0a066; --tenant-soft:#3a2716; --both:#a9acdf; --both-soft:#26283f;
+  --warn:#f0c15c; --warn-soft:#38300f; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.8;
+  padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{margin:0;line-height:1.4;text-wrap:balance}
+h1{font-size:1.75rem;font-weight:700}
+h2{font-size:1.1rem;font-weight:700}
+h3{font-size:.95rem;font-weight:700}
+p{margin:0}
+.label{font-size:.75rem;letter-spacing:.02em;color:var(--muted);font-weight:500}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;min-width:0}
+.card > h2{margin-bottom:14px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:760px){.g2,.g4{grid-template-columns:minmax(0,1fr)}}
+@media (min-width:761px) and (max-width:960px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* header */
+header.top{display:flex;flex-direction:column;gap:10px}
+.authority{font-size:.78rem;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:8px 20px;color:var(--ink2);font-size:.85rem}
+.stats b{color:var(--ink);font-weight:700}
+.badge{display:inline-block;font-size:.72rem;padding:1px 9px;border-radius:99px;background:var(--warn-soft);color:var(--warn);font-weight:500}
+
+/* calculator */
+.calc{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:24px}
+@media (max-width:860px){.calc{grid-template-columns:minmax(0,1fr)}}
+.fields{display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.82rem;color:var(--ink2)}
+.field input{font:inherit;font-variant-numeric:tabular-nums;direction:ltr;text-align:left;width:100%;
+  padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.field input:focus-visible,button:focus-visible,summary:focus-visible,#q:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.unit{font-size:.72rem;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-content:start}
+@media (max-width:460px){.tiles{grid-template-columns:minmax(0,1fr)}}
+.tile{background:var(--surface2);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .v{font-size:1.25rem;font-weight:700;overflow-wrap:anywhere}
+.tile .s{font-size:.75rem;color:var(--muted)}
+.tile.hero{grid-column:1/-1;background:var(--accent-soft)}
+.tile.hero .v{font-size:1.6rem;color:var(--accent)}
+
+/* timeline */
+.tl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.tl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.tl{grid-template-columns:minmax(0,1fr)}}
+.tl li{border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
+.tl .step{font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.tl li.opt{border-style:dashed}
+.ref{font-family:var(--font-mono);direction:ltr;unicode-bidi:isolate;font-size:.72rem}
+
+/* responsibilities */
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--surface)}
+.bar span{display:block;min-width:6px}
+.bar .l{background:var(--accent)}.bar .t{background:var(--tenant)}.bar .b{background:var(--both)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 14px;font-size:.82rem;color:var(--ink2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.seg button{font:inherit;font-size:.82rem;padding:4px 14px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;padding:10px 0;border-top:1px solid var(--line);align-items:start}
+.row:first-child{border-top:0}
+@media (max-width:520px){.row{grid-template-columns:minmax(0,1fr) auto}.row .who{grid-column:1/-1}}
+.who{font-size:.75rem;font-weight:700;padding:1px 10px;border-radius:99px;text-align:center;width:max-content;height:max-content}
+.who.l{background:var(--accent-soft);color:var(--accent)}
+.who.t{background:var(--tenant-soft);color:var(--tenant)}
+.who.b{background:var(--both-soft);color:var(--both)}
+
+/* checklist chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.8rem;padding:2px 10px;border-radius:6px;background:var(--surface2);color:var(--ink2)}
+.party h3{margin-bottom:8px}
+.party{display:flex;flex-direction:column;gap:6px}
+
+/* rules */
+.rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.rules{grid-template-columns:minmax(0,1fr)}}
+.rule{background:var(--warn-soft);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.rule b{color:var(--warn)}
+.rule span{font-size:.88rem;color:var(--ink)}
+
+/* clauses */
+.searchrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+#q{font:inherit;flex:1 1 220px;min-width:0;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.count{font-size:.8rem;color:var(--muted)}
+details{border-top:1px solid var(--line)}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;padding:10px 0;font-weight:500;display:flex;gap:10px;align-items:baseline;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";font-family:var(--font-mono);color:var(--muted);width:1ch}
+details[open] > summary::before{content:"−"}
+.art-no{font-size:.75rem;color:var(--muted);white-space:nowrap}
+.clauses{display:flex;flex-direction:column;gap:10px;padding:0 0 14px;margin:0;list-style:none}
+.clauses li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;font-size:.9rem;color:var(--ink2)}
+mark{background:var(--warn-soft);color:var(--ink);border-radius:2px}
+.empty{padding:16px 0;color:var(--muted)}
+
+/* sign-off */
+.sign{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.sign{grid-template-columns:minmax(0,1fr)}}
+.sign label{display:flex;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:.9rem}
+.sign input{accent-color:var(--accent);width:16px;height:16px}
+.progress{margin-top:12px;font-size:.85rem;color:var(--ink2)}
+footer{font-size:.78rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.bar span{transition:flex-grow .3s}}
+</style>
+
+<div class="wrap" dir="rtl" lang="fa">
+  <header class="top">
+    <div class="authority">قوه قضائیه، سازمان ثبت اسناد و املاک کشور · وزارت بازرگانی، اتحادیه صنف مشاورین املاک</div>
+    <h1>داشبورد قرارداد اجاره</h1>
+    <div class="stats">
+      <span><b>۱۲</b> ماده</span>
+      <span><b>۱۴</b> بند در ماده ۶ (شرایط و آثار قرارداد)</span>
+      <span><b>۳</b> نسخه با اعتبار واحد</span>
+      <span>مبنای قانونی: قانون روابط موجر و مستأجر ۱۳۷۶</span>
+    </div>
+  </header>
+
+  <section class="card" aria-labelledby="h-calc">
+    <h2 id="h-calc">محاسبه مبالغ قرارداد <span class="badge">مقادیر نمونه</span></h2>
+    <div class="calc">
+      <div class="fields">
+        <div class="field"><label for="rent">اجاره‌بهای ماهیانه (ماده ۴-۱)</label><input id="rent" type="number" min="0" step="1000000" value="120000000" inputmode="numeric"><span class="unit">ریال</span></div>
+        <div class="field"><label for="months">مدت اجاره (ماده ۳)</label><input id="months" type="number" min="0" step="1" value="12" inputmode="numeric"><span class="unit">ماه</span></div>
+        <div class="field"><label for="deposit">قرض‌الحسنه (ماده ۴-۲)</label><input id="deposit" type="number" min="0" step="10000000" value="2000000000" inputmode="numeric"><span class="unit">ریال</span></div>
+        <div class="field"><label for="daily">اجرت‌المثل روزانه پس از پایان مدت (بند ۶-۱۴)</label><input id="daily" type="number" min="0" step="100000" value="4000000" inputmode="numeric"><span class="unit">ریال</span></div>
+      </div>
+      <div class="tiles" aria-live="polite">
+        <div class="tile hero"><span class="label">جمع اجاره‌بها در کل مدت</span><span class="v num" id="o-total">—</span><span class="s">ریال · ماهیانه × تعداد ماه</span></div>
+        <div class="tile"><span class="label">اجاره ماهیانه</span><span class="v num" id="o-rent">—</span><span class="s">ریال</span></div>
+        <div class="tile"><span class="label">قرض‌الحسنه، بازگشتی هنگام تخلیه</span><span class="v num" id="o-dep">—</span><span class="s">ریال · بند ۶-۱۱</span></div>
+        <div class="tile"><span class="label">قرض‌الحسنه به ازای هر ماه اجاره</span><span class="v num" id="o-ratio">—</span><span class="s">برابر اجاره ماهیانه</span></div>
+        <div class="tile"><span class="label">روزهای تأخیر تا مصرف کامل قرض‌الحسنه</span><span class="v num" id="o-days">—</span><span class="s">روز · تهاتر با اجرت‌المثل مجاز است</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-tl">
+    <h2 id="h-tl">مراحل قرارداد از امضا تا تخلیه</h2>
+    <ol class="tl">
+      <li><div class="step"><span>۱ · امضا</span><span class="ref">ماده 11</span></div><h3>تنظیم در سه نسخه</h3><p>مهر مشاور بر هر سه نسخه. نسخه اول و دوم به موجر و مستأجر، نسخه سوم در دفتر مشاور.</p></li>
+      <li><div class="step"><span>۲ · پرداخت اولیه</span><span class="ref">ماده 4, 10</span></div><h3>قرض‌الحسنه و حق‌الزحمه</h3><p>قرض‌الحسنه نقدی یا چکی. حق‌الزحمه مشاور همزمان با امضا پرداخت و رسید دریافت می‌شود.</p></li>
+      <li><div class="step"><span>۳ · تحویل</span><span class="ref">ماده 5</span></div><h3>تسلیم مورد اجاره</h3><p>موجر در تاریخ مقرر ملک را با تمام توابع و ملحقات تسلیم می‌کند.</p></li>
+      <li><div class="step"><span>۴ · دوران اجاره</span><span class="ref">ماده 3, 6-4</span></div><h3>پرداخت ماهیانه</h3><p>اجاره در اول یا آخر هر ماه. تأخیر بیش از یک ماه به موجر حق فسخ و درخواست تخلیه می‌دهد.</p></li>
+      <li class="opt"><div class="step"><span>۵ · اختیاری</span><span class="ref">6-13</span></div><h3>تمدید</h3><p>فقط با توافق کتبی و پیش از پایان مدت. اجاره‌نامه الحاقی بخش جدایی‌ناپذیر قرارداد می‌شود.</p></li>
+      <li><div class="step"><span>۶ · پایان</span><span class="ref">6-10, 6-11, 6-14</span></div><h3>تخلیه و تسویه</h3><p>تحویل ملک با رسید، استرداد قرض‌الحسنه با رسید و پرداخت اجرت‌المثل روزانه در صورت تأخیر در تخلیه.</p></li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="h-resp">
+    <h2 id="h-resp">تعهدات هر طرف</h2>
+    <div class="bar" id="bar" role="img" aria-label="سهم تعهدات"></div>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>موجر: <b class="num" id="c-l"></b></span>
+      <span><i style="background:var(--tenant)"></i>مستأجر: <b class="num" id="c-t"></b></span>
+      <span><i style="background:var(--both)"></i>مشترک: <b class="num" id="c-b"></b></span>
+    </div>
+    <div class="seg" id="seg">
+      <button type="button" data-f="all" aria-pressed="true">همه</button>
+      <button type="button" data-f="l" aria-pressed="false">موجر</button>
+      <button type="button" data-f="t" aria-pressed="false">مستأجر</button>
+      <button type="button" data-f="b" aria-pressed="false">مشترک</button>
+    </div>
+    <div class="rows" id="rows"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-fields">
+    <h2 id="h-fields">اطلاعاتی که فرم باید تکمیل شود</h2>
+    <div class="grid g2">
+      <div class="party"><h3>مشخصات هر یک از طرفین (ماده ۱)</h3>
+        <div class="chips"><span class="chip">نام</span><span class="chip">نام پدر</span><span class="chip">شماره شناسنامه</span><span class="chip">محل صدور</span><span class="chip">کد ملی</span><span class="chip">تاریخ تولد</span><span class="chip">نشانی</span><span class="chip">تلفن</span><span class="chip">وکالت / قیمومت / ولایت / وصایت</span></div>
+      </div>
+      <div class="party"><h3>مشخصات ملک (ماده ۲)</h3>
+        <div class="chips"><span class="chip">دانگ / دستگاه / یکباب</span><span class="chip">نشانی</span><span class="chip">پلاک ثبتی فرعی و اصلی</span><span class="chip">بخش</span><span class="chip">مساحت (مترمربع)</span><span class="chip">سند: سریال، صفحه، دفتر، به نام</span><span class="chip">تعداد اتاق خواب</span><span class="chip">برق / آب / گاز: اختصاصی یا اشتراکی</span><span class="chip">شوفاژ، کولر</span><span class="chip">پارکینگ و انباری فرعی</span><span class="chip">تلفن دایر یا غیر دایر</span></div>
+      </div>
+      <div class="party"><h3>گزینه‌هایی که باید انتخاب شوند</h3>
+        <div class="chips"><span class="chip">پرداخت اجاره در اول یا آخر ماه</span><span class="chip">قرض‌الحسنه نقدی یا چکی</span><span class="chip">حق انتقال به غیر دارد یا ندارد (۶-۲)</span><span class="chip">کاربری مسکونی، تجاری یا اداری (۶-۱)</span><span class="chip">سرقفلی پرداخت شد یا نشد (۶-۹)</span></div>
+      </div>
+      <div class="party"><h3>مشاور و شهود (ماده ۹ تا ۱۱)</h3>
+        <div class="chips"><span class="chip">شماره پروانه مشاور</span><span class="chip">شماره سریال و حوزه ثبتی</span><span class="chip">تعرفه کمیسیون نظارت شهرستان</span><span class="chip">دو شاهد با مشخصات</span><span class="chip">زمان و محل تنظیم</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-rules">
+    <h2 id="h-rules">شرایطی که زود فراموش می‌شوند</h2>
+    <div class="rules">
+      <div class="rule"><b>ماده 7</b><span>همه خیارات، حتی خیار غبن، ساقط می‌شود. فقط خیار تدلیس باقی می‌ماند.</span></div>
+      <div class="rule"><b>بند 6-4</b><span>تأخیر مستأجر در پرداخت اجاره بیش از یک ماه، حق فسخ برای موجر ایجاد می‌کند.</span></div>
+      <div class="rule"><b>بند 6-14</b><span>اجرت‌المثل روزانه از قرض‌الحسنه کسر می‌شود و برای این تهاتر نیازی به رضایت جداگانه نیست.</span></div>
+      <div class="rule"><b>ماده 10</b><span>فسخ یا اقاله قرارداد، میزان حق‌الزحمه مشاور را تغییر نمی‌دهد.</span></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-text">
+    <h2 id="h-text">متن مواد و بندها</h2>
+    <div class="searchrow">
+      <input id="q" type="search" placeholder="جستجو در متن، مثلاً «قرض‌الحسنه» یا «فسخ»" aria-label="جستجو در متن قرارداد">
+      <span class="count" id="count" aria-live="polite"></span>
+    </div>
+    <div id="arts"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-sign">
+    <h2 id="h-sign">فهرست امضا و تأیید</h2>
+    <div class="sign" id="sign"></div>
+    <p class="progress" id="prog" aria-live="polite"></p>
+  </section>
+
+  <footer>این داشبورد خلاصه‌ای از فرم قرارداد است و جایگزین مشاوره حقوقی نیست. مبالغ بالا فقط نمونه‌اند.</footer>
+</div>
+
+<script>
+(function(){
+  var fa = new Intl.NumberFormat('fa-IR');
+  function f(n){ return isFinite(n) ? fa.format(Math.round(n)) : '—'; }
+  function val(id){ var v = parseFloat(document.getElementById(id).value); return isFinite(v) && v >= 0 ? v : 0; }
+
+  /* calculator */
+  function calc(){
+    var rent = val('rent'), months = val('months'), dep = val('deposit'), daily = val('daily');
+    document.getElementById('o-total').textContent = f(rent * months);
+    document.getElementById('o-rent').textContent = f(rent);
+    document.getElementById('o-dep').textContent = f(dep);
+    document.getElementById('o-ratio').textContent = rent > 0 ? new Intl.NumberFormat('fa-IR',{maximumFractionDigits:1}).format(dep / rent) : '—';
+    document.getElementById('o-days').textContent = daily > 0 ? f(Math.floor(dep / daily)) : '—';
+  }
+  ['rent','months','deposit','daily'].forEach(function(id){ document.getElementById(id).addEventListener('input', calc); });
+  calc();
+
+  /* responsibilities */
+  var R = [
+    ['l','تسلیم ملک با تمام توابع و ملحقات در تاریخ مقرر','ماده 5'],
+    ['l','مالک یا متصرف قانونی بودن و ضمیمه کردن مدارک اختیار اجاره‌دادن','بند 6-3'],
+    ['l','تعمیرات و هزینه‌های کلی: نصب و راه‌اندازی تهویه، شوفاژ، کولر، آسانسور و شبکه آب، برق و گاز','بند 6-7'],
+    ['l','مالیات مستغلات، تعمیرات اساسی و عوارض شهرداری','بند 6-8'],
+    ['l','استرداد قرض‌الحسنه هنگام تخلیه نهایی با اخذ رسید','بند 6-11'],
+    ['t','پرداخت اجاره‌بها در موعد مقرر','ماده 4-1'],
+    ['t','قبوض مصرفی آب، برق، گاز، تلفن، شارژ و فاضلاب. ارائه قبوض پرداخت‌شده هنگام تخلیه','بند 6-5'],
+    ['t','هزینه نگهداری ساختمان (شارژ) و افزایش مصوب آن','بند 6-6'],
+    ['t','هزینه‌های جزیی مربوط به استفاده از ملک، به تشخیص عرف','بند 6-7'],
+    ['t','مالیات بر درآمد و مشاغل در اماکن تجاری و اداری','بند 6-8'],
+    ['t','تحویل ملک به همان وضع اولیه و جبران خسارت','بند 6-10'],
+    ['t','تخلیه فوری پس از پایان مدت و پرداخت اجرت‌المثل روزانه در صورت تأخیر','بند 6-14'],
+    ['b','حق‌الزحمه مشاور املاک طبق تعرفه، همزمان با امضا','ماده 10']
+  ];
+  var names = {l:'موجر', t:'مستأجر', b:'مشترک'};
+  var cnt = {l:0,t:0,b:0}; R.forEach(function(r){cnt[r[0]]++;});
+  document.getElementById('c-l').textContent = f(cnt.l);
+  document.getElementById('c-t').textContent = f(cnt.t);
+  document.getElementById('c-b').textContent = f(cnt.b);
+  var bar = document.getElementById('bar');
+  ['l','t','b'].forEach(function(k){ var s = document.createElement('span'); s.className = k; s.style.flex = cnt[k] + ' 1 0'; bar.appendChild(s); });
+  var rowsEl = document.getElementById('rows');
+  function renderRows(filter){
+    rowsEl.textContent = '';
+    R.forEach(function(r){
+      if(filter !== 'all' && r[0] !== filter) return;
+      var d = document.createElement('div'); d.className = 'row';
+      var w = document.createElement('span'); w.className = 'who ' + r[0]; w.textContent = names[r[0]];
+      var p = document.createElement('span'); p.textContent = r[1];
+      var c = document.createElement('span'); c.className = 'ref'; c.textContent = r[2];
+      d.appendChild(w); d.appendChild(p); d.appendChild(c); rowsEl.appendChild(d);
+    });
+  }
+  renderRows('all');
+  document.getElementById('seg').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    this.querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    renderRows(b.getAttribute('data-f'));
+  });
+
+  /* clauses */
+  var A = [
+    {n:'1',t:'طرفین قرارداد',c:[
+      ['1-1','موجر / موجرین: نام، نام پدر، شماره شناسنامه، محل صدور، کد ملی، تاریخ تولد، نشانی و تلفن، با ذکر وکالت، قیمومت، ولایت یا وصایت در صورت وجود.'],
+      ['1-2','مستأجر / مستأجرین: همان مشخصات هویتی و تماس، با ذکر وکالت، قیمومت، ولایت یا وصایت در صورت وجود.']]},
+    {n:'2',t:'موضوع قرارداد و مشخصات مورد اجاره',c:[
+      ['','تملیک منافع ملک با مشخصات ثبتی (پلاک فرعی و اصلی، بخش، مساحت، سند مالکیت)، تعداد اتاق خواب، حق استفاده از برق، آب و گاز به صورت اختصاصی یا اشتراکی، شوفاژ، کولر، پارکینگ، انباری و تلفن، و سایر لوازم و مشاعات که مستأجر دیده و پذیرفته است.']]},
+    {n:'3',t:'مدت اجاره',c:[['','مدت اجاره به ماه یا سال شمسی، از تاریخ شروع تا تاریخ پایان.']]},
+    {n:'4',t:'اجاره‌بها و نحوه پرداخت',c:[
+      ['4-1','میزان اجاره‌بها جمعاً و ماهیانه به ریال، که در اول یا آخر هر ماه به موجب قبض رسید پرداخت می‌شود.'],
+      ['4-2','مبلغ قرض‌الحسنه نقداً یا طی چک (شماره، بانک، شعبه، تاریخ) به موجر پرداخت می‌شود. معادل آن با انقضای مدت یا فسخ، همزمان با تخلیه به مستأجر مسترد خواهد شد.']]},
+    {n:'5',t:'تسلیم مورد اجاره',c:[['','موجر مکلف است در تاریخ مقرر مورد اجاره را با تمام توابع و ملحقات آن جهت استیفا به مستأجر تسلیم کند.']]},
+    {n:'6',t:'شرایط و آثار قرارداد',c:[
+      ['6-1','مستأجر نمی‌تواند از مورد اجاره بر خلاف منظور قرارداد (مسکونی، تجاری، اداری) استفاده نماید. مستأجر مکلف است به نحو متعارف از مورد اجاره استفاده نماید.'],
+      ['6-2','مستأجر حق استفاده از مورد اجاره را به نحو مباشرت دارد و بایستی شخصاً از آن استفاده کند. مستأجر حق انتقال و واگذاری مورد اجاره را به غیر دارد / ندارد. در صورت تخلف و انتقال به غیر، اعتبار اجاره منوط به تنفیذ مالک خواهد بود. اگر مستأجر مورد اجاره را بدون اذن مالک به غیر تسلیم کرده باشد، شخص متصرف در صورت عدم تنفیذ در برابر مالک در حدود مقررات قانونی مسئول است.'],
+      ['6-3','موجر باید مالک یا متصرف قانونی یا قراردادی مورد اجاره باشد. در صورتی که به عنوان ولایت، وصایت، وکالت، قیمومت، اجاره با حق انتقال و مانند آن اختیار اجاره‌دادن دارد، بایستی اسناد و مدارک مثبت حق انتقال را ضمیمه کند و مشاور موظف به احراز این موضوع است.'],
+      ['6-4','در صورتی که مستأجر از پرداخت اجاره‌بها بیش از یک ماه تأخیر نماید، موجر می‌تواند قرارداد را فسخ و تخلیه مورد اجاره را از مراجع ذیصلاح بخواهد.'],
+      ['6-5','پرداخت هزینه‌های مصرفی آب، برق، گاز، تلفن، شارژ و فاضلاب شهری بر عهده مستأجر است و باید در موعد تخلیه یا فسخ قبوض پرداخت‌شده را به موجر ارائه نماید.'],
+      ['6-6','پرداخت هزینه نگهداری آپارتمان (حق شارژ و غیره) و افزایش احتمالی آن بر مبنای مصوب مسئول یا مسئولین ساختمان بر عهده مستأجر است.'],
+      ['6-7','هزینه تعمیرات و هزینه‌های کلی از قبیل نصب و راه‌اندازی دستگاه تهویه، شوفاژ، کولر، آسانسور و شبکه آب، برق و گاز به عهده مالک است. هزینه‌های جزیی مربوط به استفاده از مورد اجاره به عهده مستأجر است و نوع و میزان آن را عرف تعیین می‌کند.'],
+      ['6-8','مالیات مستغلات، تعمیرات اساسی و عوارض شهرداری با موجر است. مالیات بر درآمد و مشاغل (تجاری، اداری) بر عهده مستأجر است.'],
+      ['6-9','در اماکن تجاری، مبلغ سرقفلی (به عدد و حروف) توسط مستأجر به موجر تسلیم و پرداخت گردید / نگردیده است.'],
+      ['6-10','مستأجر مکلف است در زمان تخلیه، مورد اجاره را به همان وضعی که تحویل گرفته به موجر تحویل داده و رسید دریافت نماید. در صورت حدوث خسارت به عین مستأجره، مستأجر متعهد به جبران آن است.'],
+      ['6-11','موجر ملزم است در زمان تخلیه نهایی و با تسویه حساب بدهی‌های زمان اجاره، نسبت به استرداد قرض‌الحسنه دریافتی از مستأجر با اخذ رسید اقدام نماید.'],
+      ['6-12','اگر موجر هزینه‌هایی را که موجب انتفاع مستأجر از ملک است پرداخت نکند و به مستأجر نیز اجازه تعمیرات لازم ندهد، مستأجر می‌تواند شخصاً تعمیر کند و هزینه را با موجر محاسبه نماید.'],
+      ['6-13','تمدید قرارداد فقط با توافق کتبی طرفین قبل از انقضای مدت ممکن است. در صورت تمدید، اجاره‌نامه الحاقی با شرایط و تغییرات مورد توافق بخش لاینفک قرارداد خواهد بود.'],
+      ['6-14','مستأجر مکلف است به محض اتمام مدت، عین مستأجره را بدون هیچ عذری تخلیه و تسلیم کند. اگر در تاریخ انقضا تخلیه کامل نکند یا از تسلیم آن خودداری کند، باید روزانه مبلغ مقرر را به عنوان اجرت‌المثل ایام تصرف بپردازد و تهاتر این خسارت با قرض‌الحسنه بلا اشکال است.']]},
+    {n:'7',t:'سقوط خیارات',c:[['','کلیه خیارات ولو خیار غبن، به استثنای خیار تدلیس، از طرفین ساقط گردید.']]},
+    {n:'8',t:'قانون حاکم',c:[['','این قرارداد در سایر موارد تابع مقررات قانون مدنی و قانون روابط موجر و مستأجر مصوب سال ۱۳۷۶ است.']]},
+    {n:'9',t:'شهود',c:[['','به استناد ماده ۲ قانون روابط موجر و مستأجر مصوب ۱۳۷۶، شهود با مشخصات مندرج این قرارداد را امضا و گواهی می‌نمایند.']]},
+    {n:'10',t:'حق‌الزحمه مشاور املاک',c:[['','حق‌الزحمه طبق تعرفه کمیسیون نظارت شهرستان به طور جداگانه به عهده طرفین است و همزمان با امضا پرداخت و رسید دریافت می‌شود. فسخ یا اقاله قرارداد تأثیری در میزان حق‌الزحمه ندارد.']]},
+    {n:'11',t:'تنظیم و نسخه‌ها',c:[['','قرارداد در تاریخ و ساعت معین، در دفتر مشاور املاک، در سه نسخه تنظیم، امضا و مبادله می‌شود. مشاور نسخه‌ها را ممهور به مهر خود می‌کند، نسخه اول و دوم را به موجر و مستأجر تسلیم و نسخه سوم را در دفتر مخصوص بایگانی می‌کند. هر سه نسخه اعتبار واحد دارند.']]},
+    {n:'12',t:'تأیید حقوقی',c:[['','موارد حقوقی مفاد این قرارداد مطابق با مقررات جاری است و تأیید می‌شود. کارشناس حقوقی نام و امضا می‌کند.']]}
+  ];
+  var arts = document.getElementById('arts'), countEl = document.getElementById('count'), q = document.getElementById('q');
+  function esc(s){ return s.replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function hl(s, term){
+    var e = esc(s); if(!term) return e;
+    var t = esc(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return e.replace(new RegExp('(' + t + ')', 'g'), '<mark>$1</mark>');
+  }
+  function renderArts(){
+    var term = q.value.trim(), shown = 0, html = '';
+    A.forEach(function(a){
+      var items = a.c.filter(function(c){ return !term || c[1].indexOf(term) > -1 || a.t.indexOf(term) > -1; });
+      if(!items.length) return;
+      shown++;
+      html += '<details' + (term ? ' open' : '') + '><summary><span class="art-no">ماده ' + fa.format(+a.n) + '</span><span>' + hl(a.t, term) + '</span></summary><ul class="clauses">' +
+        items.map(function(c){ return '<li><span class="ref">' + c[0] + '</span><span>' + hl(c[1], term) + '</span></li>'; }).join('') + '</ul></details>';
+    });
+    arts.innerHTML = html || '<p class="empty">موردی پیدا نشد. عبارت کوتاه‌تری امتحان کنید.</p>';
+    countEl.textContent = fa.format(shown) + ' از ' + fa.format(A.length) + ' ماده';
+  }
+  q.addEventListener('input', renderArts);
+  renderArts();
+
+  /* sign-off */
+  var S = ['موجر','مستأجر','شاهد اول','شاهد دوم','کارشناس حقوقی','مهر و امضای مشاور املاک'];
+  var sign = document.getElementById('sign'), prog = document.getElementById('prog');
+  S.forEach(function(s, i){
+    var l = document.createElement('label'), c = document.createElement('input');
+    c.type = 'checkbox'; c.id = 'sg' + i;
+    l.appendChild(c); l.appendChild(document.createTextNode(s)); sign.appendChild(l);
+  });
+  function upd(){
+    var n = sign.querySelectorAll('input:checked').length;
+    prog.textContent = n === S.length ? 'همه امضاها و مهرها تکمیل است.' : fa.format(n) + ' از ' + fa.format(S.length) + ' مورد تکمیل شده است.';
+  }
+  sign.addEventListener('change', upd); upd();
+})();
+</script>
+
+</body></html>
